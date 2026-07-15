@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoodMate Pro | Twilight Mist Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #818cf8;
+            --accent-cyan: #22d3ee;
+            --accent-lavender: #c084fc;
+            --accent-coral: #fb7185;
+            --bg-mist: #eef2f6;
+            --glass: rgba(255, 255, 255, 0.65);
+            --shadow-soft: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+        }
+
+        body {
+            background-color: var(--bg-mist);
+            color: #334155;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: all 1s ease;
+        }
+
+        .aurora-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            filter: blur(80px);
+            opacity: 0.7;
+        }
+
+        .blob {
+            position: absolute;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            transition: all 3s ease-in-out;
+        }
+
+        .blob-1 { top: -10%; left: -5%; background: var(--accent-cyan); animation: float 15s infinite alternate; }
+        .blob-2 { bottom: -10%; right: -5%; background: var(--accent-lavender); animation: float 18s infinite alternate-reverse; }
+        .blob-3 { top: 40%; left: 30%; background: var(--accent-coral); opacity: 0.4; animation: float 22s infinite alternate; }
+
+        @keyframes float {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(150px, 100px) scale(1.2); }
+        }
+
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow-soft);
+            border-radius: 36px;
+        }
+
+        .neumorphic-inset {
+            background: #eef2f6;
+            box-shadow: inset 6px 6px 12px #d1d9e6, inset -6px -6px 12px #ffffff;
+            border-radius: 24px;
+        }
+
+        .premium-btn {
+            background: white;
+            box-shadow: 4px 4px 12px #d1d9e6, -4px -4px 12px #ffffff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .premium-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 8px 8px 18px #c2ccd8, -8px -8px 18px #ffffff;
+            color: var(--primary);
+        }
+
+        .wave-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 30px;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+            animation: wave-pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes wave-pulse {
+            0%, 100% { height: 6px; }
+            50% { height: 28px; }
+        }
+
+        /* NEW ANIMATION CLASSES */
+        .view-transition {
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            width: 100%;
+        }
+
+        .view-center {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            pointer-events: auto;
+            position: relative;
+            filter: blur(0);
+        }
+
+        .view-left {
+            opacity: 0;
+            transform: translateX(-120px) scale(0.95);
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            filter: blur(10px);
+        }
+
+        .view-right {
+            opacity: 0;
+            transform: translateX(120px) scale(0.95);
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            filter: blur(10px);
+        }
+
+        .hidden { display: none !important; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 10px; }
+
+        @keyframes scan { 0%, 100% { top: 0%; opacity: 0; } 50% { top: 100%; opacity: 1; } }
+        .animate-scan { animation: scan 3s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="aurora-container">
+        <div id="blob1" class="blob blob-1"></div>
+        <div id="blob2" class="blob blob-2"></div>
+        <div id="blob3" class="blob blob-3"></div>
+    </div>
+
+    <!-- AUTH OVERLAY -->
+    <div id="authOverlay" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-50/40 backdrop-blur-3xl transition-all duration-1000">
+        <div class="max-w-md w-full glass p-10 text-center space-y-10">
+            <div class="relative inline-block">
+                <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl">
+                    <i class="fas fa-fingerprint text-indigo-400 text-5xl"></i>
+                </div>
+            </div>
+            
+            <div id="authContent" class="space-y-6">
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-800">Mindful Check-in</h1>
+                <p class="text-slate-500 text-sm mt-2 font-medium">Initialize neural harmony</p>
+                <button onclick="startSync()" class="w-full premium-btn py-5 rounded-2xl font-bold flex items-center justify-center gap-3 text-slate-700">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-6" alt="Google">
+                    Sync Identity
+                </button>
+            </div>
+
+            <div id="syncLoading" class="hidden py-8 space-y-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-14 h-14 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin"></div>
+                </div>
+                <p id="syncMsg" class="text-xs font-bold text-slate-500 tracking-widest uppercase">Initializing Link...</p>
+            </div>
+
+            <div id="nameCapture" class="hidden space-y-10">
+                <h2 class="text-2xl font-bold text-slate-800 italic">Identify Yourself</h2>
+                <div class="neumorphic-inset p-2">
+                    <input type="text" id="userNameInput" placeholder="Full Name" class="w-full bg-transparent p-4 text-center text-2xl font-bold outline-none placeholder:text-slate-300">
+                </div>
+                <button onclick="finalizeAuth()" class="w-full premium-btn py-5 rounded-2xl font-bold text-indigo-600">Complete Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="mainApp" class="max-w-7xl mx-auto px-6 pt-10 pb-20 hidden opacity-0 transition-opacity duration-1000">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
+            <div class="flex items-center gap-6">
+                <div class="w-16 h-16 glass flex items-center justify-center text-indigo-500 shadow-xl border-white/50">
+                    <i class="fas fa-wave-square text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-black tracking-tighter text-slate-800">MoodMate <span class="text-indigo-400 font-light italic">Pro</span></h2>
+                    <p id="greetingText" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Status: Neural Link Ready</p>
+                </div>
+            </div>
+
+            <nav class="flex items-center gap-2 glass p-2 rounded-full shadow-inner border-white/20">
+                <button onclick="navigate('dashboard')" id="nav-dashboard" class="px-8 py-3 rounded-full font-bold text-[10px] tracking-[0.2em] bg-white text-indigo-500 shadow-md transition-all uppercase">Dashboard</button>
+                <button onclick="navigate('arcade')" id="nav-arcade" class="px-8 py-3 rounded-full font-bold text-[10px] tracking-[0.2em] text-slate-400 hover:text-slate-600 transition-all uppercase">Arcade</button>
+            </nav>
+
+            <div class="flex items-center gap-5 glass p-1.5 pr-8 rounded-full shadow-lg border-white/30">
+                <!-- Avatar with initials -->
+                <div id="avatarContainer" class="w-12 h-12 rounded-full border-2 border-white shadow-sm flex items-center justify-center font-bold text-white text-lg bg-indigo-400 uppercase">
+                    U
+                </div>
+                <div>
+                    <p id="profileName" class="text-xs font-black text-slate-800 uppercase tracking-tight">Guest</p>
+                    <p class="text-[8px] text-indigo-400 font-bold uppercase tracking-widest">Resonance Level 1</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- WRAPPER FOR SLIDE ANIMATION -->
+        <div class="relative min-h-[700px]">
+            
+            <!-- DASHBOARD -->
+            <div id="view-dashboard" class="view-transition view-center">
+                <main class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    <div class="lg:col-span-7 space-y-10">
+                        <div class="glass p-3">
+                            <div class="flex p-3 gap-3 neumorphic-inset">
+                                <button id="tabText" onclick="switchMode('text')" class="flex-1 py-4 rounded-2xl text-[10px] font-black tracking-[0.2em] bg-white text-indigo-500 shadow-md">SEMANTIC</button>
+                                <button id="tabCamera" onclick="switchMode('camera')" class="flex-1 py-4 rounded-2xl text-[10px] font-black tracking-[0.2em] text-slate-400">BIOMETRIC</button>
+                            </div>
+                            <div class="p-8">
+                                <div id="textMode">
+                                    <textarea id="textInput" placeholder="How are you feeling today?" class="w-full h-72 bg-transparent border-none p-4 text-3xl font-light text-slate-700 outline-none focus:ring-0 placeholder:text-slate-200 resize-none custom-scroll"></textarea>
+                                    <button onclick="analyzeText()" class="w-full premium-btn mt-8 py-6 rounded-3xl font-black text-[10px] tracking-[0.4em] uppercase text-indigo-600">Analyze Sentiment</button>
+                                </div>
+                                <div id="cameraMode" class="hidden">
+                                    <div class="relative aspect-video neumorphic-inset overflow-hidden mb-8 rounded-[2.5rem] border border-white/50">
+                                        <video id="webcam" class="w-full h-full object-cover grayscale" autoplay playsinline></video>
+                                        <canvas id="canvas" class="hidden"></canvas>
+                                        <div id="scannerLine" class="absolute top-0 left-0 w-full h-1 bg-indigo-400 shadow-[0_0_15px_#818cf8] hidden animate-scan"></div>
+                                    </div>
+                                    <button onclick="analyzeCamera()" class="w-full premium-btn py-6 rounded-3xl font-black text-[10px] tracking-[0.4em] uppercase text-emerald-600">Capture Resonance</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-5">
+                        <div class="glass p-12 flex flex-col items-center text-center h-full border-t-8 border-indigo-200">
+                            <p class="text-[10px] text-slate-400 uppercase tracking-[0.6em] font-black mb-10">Analysis Results</p>
+                            <div id="vibeEmoji" class="text-9xl mb-8 transition-transform duration-500">🌑</div>
+                            <h2 id="vibeText" class="text-5xl font-black text-slate-800 italic uppercase mb-12 tracking-tighter">Waiting</h2>
+                            <div class="w-full space-y-8 flex-grow">
+                                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Sonic Recommendation</h4>
+                                    <div class="wave-container">
+                                        <div class="wave-bar" style="animation-delay: 0.1s"></div>
+                                        <div class="wave-bar" style="animation-delay: 0.4s"></div>
+                                        <div class="wave-bar" style="animation-delay: 0.2s"></div>
+                                        <div class="wave-bar" style="animation-delay: 0.5s"></div>
+                                    </div>
+                                </div>
+                                <div id="songList" class="space-y-5 overflow-y-auto max-h-[350px] pr-2 custom-scroll">
+                                    <div class="py-24 opacity-10 italic text-xs font-bold uppercase tracking-widest">Awaiting neural input...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- ARCADE -->
+            <div id="view-arcade" class="view-transition view-right">
+                <div class="text-center mb-16">
+                    <h2 class="text-5xl font-black text-slate-800 italic uppercase tracking-tighter">Arcade for the Soul</h2>
+                    <p class="text-slate-400 mt-4 uppercase text-[10px] font-black tracking-[0.3em]">Offline mechanics active</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                    <div onclick="openGame('bubble')" class="glass p-10 flex flex-col items-center gap-8 cursor-pointer hover:bg-white transition-all">
+                        <div class="w-24 h-24 bg-cyan-50 rounded-full flex items-center justify-center text-cyan-500 text-4xl shadow-inner"><i class="fas fa-soap"></i></div>
+                        <h4 class="font-black text-slate-800 uppercase text-xs">Bubble Pop</h4>
+                    </div>
+                    <div onclick="openGame('match')" class="glass p-10 flex flex-col items-center gap-8 cursor-pointer hover:bg-white transition-all">
+                        <div class="w-24 h-24 bg-purple-50 rounded-full flex items-center justify-center text-purple-400 text-4xl shadow-inner"><i class="fas fa-th-large"></i></div>
+                        <h4 class="font-black text-slate-800 uppercase text-xs">Memory Match</h4>
+                    </div>
+                    <div onclick="openGame('breath')" class="glass p-10 flex flex-col items-center gap-8 cursor-pointer hover:bg-white transition-all">
+                        <div class="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 text-4xl shadow-inner"><i class="fas fa-wind"></i></div>
+                        <h4 class="font-black text-slate-800 uppercase text-xs">Breath Sync</h4>
+                    </div>
+                    <div onclick="openGame('catch')" class="glass p-10 flex flex-col items-center gap-8 cursor-pointer hover:bg-white transition-all">
+                        <div class="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 text-4xl shadow-inner"><i class="fas fa-bullseye"></i></div>
+                        <h4 class="font-black text-slate-800 uppercase text-xs">Reflex Rain</h4>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Relative Wrapper -->
+    </div>
+
+    <!-- MODAL -->
+    <div id="gameModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
+        <div class="glass max-w-2xl w-full h-[600px] relative flex flex-col overflow-hidden bg-white/80">
+            <button onclick="closeGame()" class="absolute top-8 right-8 w-12 h-12 glass rounded-full flex items-center justify-center hover:bg-white shadow-lg transition-all z-10"><i class="fas fa-times"></i></button>
+            <div id="gameContent" class="flex-grow flex flex-col items-center justify-center p-12"></div>
+        </div>
+    </div>
+
+    <script>
+        // UPDATED BACKEND CONNECTION (Render)
+        const API_URL = "https://emotion-ai-0325.onrender.com/full-pipeline";
+        let localStream = null;
+        let userData = { name: "Guest" };
+
+        function startSync() {
+            document.getElementById('authContent').classList.add('hidden');
+            const loader = document.getElementById('syncLoading');
+            loader.classList.remove('hidden');
+            const steps = ["MAPPING_ID...", "NEURAL_LINK...", "SYNCING...", "READY."];
+            let i = 0;
+            const t = setInterval(() => {
+                document.getElementById('syncMsg').innerText = steps[i++] || steps[steps.length-1];
+                if(i >= steps.length) {
+                    clearInterval(t);
+                    setTimeout(() => {
+                        loader.classList.add('hidden');
+                        document.getElementById('nameCapture').classList.remove('hidden');
+                    }, 500);
+                }
+            }, 600);
+        }
+
+        function finalizeAuth() {
+            const val = document.getElementById('userNameInput').value.trim();
+            if(val) userData.name = val;
+
+            const hour = new Date().getHours();
+            let timeGreet = "Good Evening";
+            if (hour < 12) timeGreet = "Good Morning";
+            else if (hour < 17) timeGreet = "Good Afternoon";
+
+            const overlay = document.getElementById('authOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                setTimeout(() => document.getElementById('mainApp').style.opacity = '1', 50);
+
+                document.getElementById('profileName').innerText = userData.name;
+                document.getElementById('greetingText').innerText = `Peace be with you, ${userData.name}`;
+                
+                // Set initials for avatar
+                const initials = userData.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('avatarContainer').innerText = initials || 'U';
+                
+                showNotify(`Resonance Sync: ${timeGreet}, ${userData.name}! System online.`, "success");
+            }, 1000);
+        }
+
+        function navigate(view) {
+            const dash = document.getElementById('view-dashboard');
+            const arcade = document.getElementById('view-arcade');
+            const btnDash = document.getElementById('nav-dashboard');
+            const btnArcade = document.getElementById('nav-arcade');
+
+            if(view === 'dashboard') {
+                // Moving Left: Dash comes to Center, Arcade goes to Right
+                dash.classList.remove('view-left', 'view-right');
+                dash.classList.add('view-center');
+                
+                arcade.classList.remove('view-center', 'view-left');
+                arcade.classList.add('view-right');
+
+                btnDash.classList.add('bg-white', 'text-indigo-500', 'shadow-md');
+                btnArcade.classList.remove('bg-white', 'text-indigo-500', 'shadow-md');
+                btnArcade.classList.add('text-slate-400');
+            } else {
+                // Moving Right: Dash goes Left, Arcade comes to Center
+                arcade.classList.remove('view-left', 'view-right');
+                arcade.classList.add('view-center');
+                
+                dash.classList.remove('view-center', 'view-right');
+                dash.classList.add('view-left');
+
+                btnArcade.classList.add('bg-white', 'text-indigo-500', 'shadow-md');
+                btnDash.classList.remove('bg-white', 'text-indigo-500', 'shadow-md');
+                btnDash.classList.add('text-slate-400');
+                stopCamera();
+            }
+        }
+
+        function switchMode(mode) {
+            const t = document.getElementById('textMode');
+            const c = document.getElementById('cameraMode');
+            const tabT = document.getElementById('tabText');
+            const tabC = document.getElementById('tabCamera');
+            if(mode === 'text') {
+                t.classList.remove('hidden'); c.classList.add('hidden');
+                tabT.classList.add('bg-white', 'text-indigo-500', 'shadow-md');
+                tabC.classList.remove('bg-white', 'text-indigo-500', 'shadow-md');
+                stopCamera();
+            } else {
+                c.classList.remove('hidden'); t.classList.add('hidden');
+                tabC.classList.add('bg-white', 'text-indigo-500', 'shadow-md');
+                tabT.classList.remove('bg-white', 'text-indigo-500', 'shadow-md');
+                startCamera();
+            }
+        }
+
+        async function startCamera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                document.getElementById('webcam').srcObject = localStream;
+                document.getElementById('scannerLine').classList.remove('hidden');
+            } catch (e) { showNotify("Camera access denied.", "error"); }
+        }
+
+        function stopCamera() {
+            if(localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
+                document.getElementById('scannerLine').classList.add('hidden');
+            }
+        }
+
+        async function analyzeText() {
+            const val = document.getElementById('textInput').value.trim();
+            if(!val) return;
+            // Payload strictly matches backend logic for text
+            performAnalysis({ input_type: "text", data: val });
+        }
+
+        async function analyzeCamera() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('canvas');
+            if (!video || !canvas || !video.srcObject) {
+                showNotify("Neural scanner offline.", "error");
+                return;
+            }
+            canvas.width = 640; canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 640, 480);
+            
+            // FIX: Send full data URI so backend can split it (resolves "expected 2, got 1" error)
+            const base64 = canvas.toDataURL("image/jpeg", 0.7);
+            
+            performAnalysis({ input_type: "face", data: base64 });
+        }
+
+        async function performAnalysis(payload) {
+            // Internal safety check
+            if (!payload.input_type || !payload.data) {
+                showNotify("Invalid payload package.", "error");
+                return;
+            }
+
+            document.getElementById('vibeText').innerText = "Syncing...";
+            try {
+                // Added mode and credentials to handle some network policies better
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({ error: "Server Rejected Request" }));
+                    throw new Error(errData.error || `Server status: ${res.status}`);
+                }
+                
+                const data = await res.json();
+                updateVibe(data.emotion, data.songs);
+                updateBlobs(data.emotion);
+            } catch (err) { 
+                console.error("Sync Error:", err);
+                showNotify(`Resonance desync: ${err.message}`, "error"); 
+                document.getElementById('vibeText').innerText = "Waiting";
+            }
+        }
+
+        function updateVibe(emotion, songs) {
+            const emojis = { happy: '☀️', sad: '🌧️', angry: '🔥', surprised: '⚡', neutral: '☁️', fear: '🌀' };
+            document.getElementById('vibeEmoji').innerText = emojis[emotion.toLowerCase()] || '🌑';
+            document.getElementById('vibeText').innerText = emotion;
+            const songList = document.getElementById('songList');
+            if(!songs || songs.length === 0) {
+                songList.innerHTML = `<div class="py-10 opacity-30 italic text-xs uppercase font-bold text-center">Null Entries</div>`;
+            } else {
+                songList.innerHTML = songs.map((s, i) => `
+                    <div class="glass p-5 flex items-center gap-5 bg-white/40 hover:bg-white shadow-sm transition-all cursor-pointer" style="animation: slideIn 0.4s ease forwards ${i * 0.1}s; opacity:0;">
+                        <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-300"><i class="fas fa-play text-xs"></i></div>
+                        <div class="flex-1 overflow-hidden text-left">
+                            <p class="text-xs font-black text-slate-800 truncate">${s.name}</p>
+                            <p class="text-[9px] text-slate-400 uppercase font-black tracking-widest truncate">${s.artist} ${s.genre ? '• ' + s.genre : ''}</p>
+                        </div>
+                        <a href="https://open.spotify.com/search/${encodeURIComponent(s.name + ' ' + s.artist)}" target="_blank" class="text-slate-600 hover:text-emerald-500 transition-colors"><i class="fab fa-spotify text-2xl"></i></a>
+                    </div>`).join('');
+            }
+        }
+
+        function updateBlobs(emotion) {
+            const colors = {
+                happy: { c1: '#22d3ee', c2: '#fbbf24', c3: '#fb7185' },
+                sad: { c1: '#94a3b8', c2: '#60a5fa', c3: '#d1d5db' },
+                neutral: { c1: '#22d3ee', c2: '#c084fc', c3: '#fb7185' }
+            };
+            const config = colors[emotion.toLowerCase()] || colors.neutral;
+            document.getElementById('blob1').style.background = config.c1;
+            document.getElementById('blob2').style.background = config.c2;
+            document.getElementById('blob3').style.background = config.c3;
+        }
+
+        // ARCADE HELPERS
+        function openGame(type) {
+            const modal = document.getElementById('gameModal');
+            const content = document.getElementById('gameContent');
+            modal.classList.remove('hidden');
+            content.innerHTML = '';
+            if(type === 'bubble') initBubblePop(content);
+            if(type === 'breath') initBreathSync(content);
+            if(type === 'match') initMoodMatch(content);
+            if(type === 'catch') initReflexRain(content);
+        }
+        function closeGame() { document.getElementById('gameModal').classList.add('hidden'); document.getElementById('gameContent').innerHTML = ''; }
+
+        function initBubblePop(container) {
+            container.innerHTML = `<div id="bubble-zone" class="w-full h-full relative overflow-hidden bg-cyan-50/30 rounded-[3rem] cursor-pointer"><div class="absolute top-6 left-6 font-black text-cyan-500 uppercase text-[10px] tracking-widest">Efficiency: <span id="pop-count">0</span></div></div>`;
+            const zone = document.getElementById('bubble-zone');
+            let count = 0;
+            const spawn = () => {
+                const b = document.createElement('div');
+                const size = 40 + Math.random() * 60;
+                b.className = 'absolute bg-white/70 border-2 border-cyan-100 rounded-full transition-all duration-300 transform scale-0 hover:scale-110 shadow-sm';
+                b.style.width = size + 'px'; b.style.height = size + 'px';
+                b.style.left = Math.random() * 85 + '%'; b.style.top = Math.random() * 85 + '%';
+                zone.appendChild(b);
+                setTimeout(() => b.classList.remove('scale-0'), 10);
+                b.onclick = (e) => { e.stopPropagation(); b.classList.add('scale-150', 'opacity-0'); count++; document.getElementById('pop-count').innerText = count; setTimeout(() => b.remove(), 300); };
+            };
+            for(let i=0; i<10; i++) spawn();
+            const bubbleInt = setInterval(() => { if(!document.getElementById('bubble-zone')) clearInterval(bubbleInt); spawn(); }, 1500);
+        }
+
+        function initBreathSync(container) {
+            container.innerHTML = `<div class="text-center space-y-16"><h3 id="breath-hint" class="text-3xl font-black text-slate-800 italic uppercase">Sync...</h3><div id="breath-circle" class="w-40 h-40 bg-emerald-400/20 border-8 border-emerald-400 rounded-full transition-all duration-[4000ms] ease-in-out mx-auto shadow-2xl"></div></div>`;
+            const circle = document.getElementById('breath-circle');
+            const hint = document.getElementById('breath-hint');
+            let state = 0;
+            const loop = () => {
+                if(!document.getElementById('breath-circle')) return;
+                if(state === 0) { hint.innerText = "Inhale"; circle.style.transform = "scale(2.2)"; state = 1; setTimeout(loop, 4000); }
+                else if(state === 1) { hint.innerText = "Hold"; state = 2; setTimeout(loop, 2000); }
+                else { hint.innerText = "Exhale"; circle.style.transform = "scale(1)"; state = 0; setTimeout(loop, 4000); }
+            };
+            loop();
+        }
+
+        function initMoodMatch(container) {
+            const emojis = ['☀️','☀️','🌈','🌈','🍦','🍦','🎈','🎈','🎨','🎨','🐶','🐶','🦋','🦋','🌸','🌸'];
+            emojis.sort(() => Math.random() - 0.5);
+            container.innerHTML = `<div class="grid grid-cols-4 gap-4" id="match-grid"></div>`;
+            const grid = document.getElementById('match-grid');
+            let selected = [];
+            emojis.forEach((em) => {
+                const card = document.createElement('div');
+                card.className = 'w-20 h-20 glass flex items-center justify-center text-3xl cursor-pointer transition-all hover:bg-white rounded-2xl';
+                card.innerText = '';
+                grid.appendChild(card);
+                card.onclick = () => {
+                    if(selected.length < 2 && !card.classList.contains('matched') && !selected.includes(card)) {
+                        card.innerText = em;
+                        selected.push(card);
+                        if(selected.length === 2) {
+                            if(selected[0].innerText === selected[1].innerText) { selected.forEach(c => c.classList.add('matched', 'bg-emerald-50')); selected = []; }
+                            else { setTimeout(() => { selected.forEach(c => c.innerText = ''); selected = []; }, 800); }
+                        }
+                    }
+                };
+            });
+        }
+
+        function initReflexRain(container) {
+            container.innerHTML = `<div id="rain-zone" class="w-full h-[450px] relative overflow-hidden neumorphic-inset flex flex-col items-center justify-center rounded-[3rem]"><div class="absolute top-6 font-black uppercase text-[10px] tracking-widest text-slate-500">Score: <span id="rain-score">0</span></div><div id="game-starter" class="premium-btn px-10 py-4 rounded-full cursor-pointer z-10 font-black uppercase tracking-widest text-[10px]">Start Reflex Loop</div></div>`;
+            const zone = document.getElementById('rain-zone');
+            const starter = document.getElementById('game-starter');
+            let score = 0;
+            starter.onclick = () => {
+                starter.remove();
+                const rainInt = setInterval(() => {
+                    if(!document.getElementById('rain-zone')) { clearInterval(rainInt); return; }
+                    const star = document.createElement('div');
+                    star.className = 'absolute text-3xl cursor-pointer transition-all duration-[2800ms] linear select-none';
+                    star.innerText = '⭐';
+                    star.style.left = Math.random() * 85 + '%'; star.style.top = '-50px';
+                    zone.appendChild(star);
+                    setTimeout(() => star.style.top = '480px', 50);
+                    star.onclick = () => { score++; document.getElementById('rain-score').innerText = score; star.remove(); };
+                    setTimeout(() => { if(star.parentNode) star.remove(); }, 2800);
+                }, 900);
+            };
+        }
+
+        function showNotify(msg, type) {
+            const n = document.createElement('div');
+            const bg = type==='error'?'bg-rose-50 border-rose-100 text-rose-500':'bg-white border-slate-100 text-slate-600';
+            n.className = `fixed bottom-10 left-10 px-8 py-5 rounded-[2rem] text-[10px] font-black z-[300] shadow-2xl transition-all duration-700 border uppercase tracking-widest ${bg}`;
+            n.innerHTML = `<i class="fas fa-satellite-dish mr-3 animate-pulse"></i> ${msg}`;
+            document.body.appendChild(n);
+            setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translateY(10px)'; setTimeout(()=>n.remove(), 1000); }, 5000);
+        }
+
+        const extraStyles = document.createElement('style');
+        extraStyles.textContent = `@keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } } .matched { pointer-events: none; }`;
+        document.head.appendChild(extraStyles);
+    </script>
+</body>
+</html>
